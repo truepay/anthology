@@ -2,12 +2,13 @@ package app
 
 import (
 	"fmt"
-	"github.com/go-ozzo/ozzo-routing"
+	"net/http"
+	"time"
+
+	routing "github.com/go-ozzo/ozzo-routing"
 	"github.com/go-ozzo/ozzo-routing/access"
 	"github.com/go-ozzo/ozzo-routing/fault"
 	"github.com/sirupsen/logrus"
-	"net/http"
-	"time"
 )
 
 func Init(logger *logrus.Logger) routing.Handler {
@@ -33,7 +34,7 @@ func GetRequestScope(c *routing.Context) RequestScope {
 
 func logAccess(c *routing.Context, logFunc access.LogFunc, start time.Time) {
 	rw := c.Response.(*access.LogResponseWriter)
-	elapsed := float64(time.Now().Sub(start).Nanoseconds()) / 1e6
+	elapsed := float64(time.Since(start).Nanoseconds()) / 1e6
 	requestLine := fmt.Sprintf("%s %s %s", c.Request.Method, c.Request.URL.Path, c.Request.Proto)
 	logFunc(`[%.3fms] %s %d %d`, elapsed, requestLine, rw.Status, rw.BytesWritten)
 }
