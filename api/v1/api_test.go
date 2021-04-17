@@ -1,19 +1,21 @@
 package v1_test
 
 import (
+	"context"
 	"net/http/httptest"
 	"testing"
 
 	"bytes"
-	"github.com/erikvanbrakel/anthology/api/v1"
+	"net/http"
+
+	v1 "github.com/erikvanbrakel/anthology/api/v1"
 	"github.com/erikvanbrakel/anthology/app"
 	"github.com/erikvanbrakel/anthology/registry"
 	"github.com/erikvanbrakel/anthology/services"
 	"github.com/gavv/httpexpect"
-	"github.com/go-ozzo/ozzo-routing"
+	routing "github.com/go-ozzo/ozzo-routing"
 	"github.com/go-ozzo/ozzo-routing/content"
 	"github.com/sirupsen/logrus"
-	"net/http"
 )
 
 type apiTestCase struct {
@@ -42,10 +44,11 @@ func newRouter() *routing.Router {
 func runAPITests(t *testing.T, dataset []testModule, tests []apiTestCase) {
 	for _, test := range tests {
 		t.Run(test.tag, func(t *testing.T) {
+			ctx := context.Background()
 			r := registry.NewFakeRegistry()
 
 			for _, m := range dataset {
-				r.PublishModule(m.namespace, m.name, m.provider, m.version, bytes.NewBuffer(m.data))
+				r.PublishModule(ctx, m.namespace, m.name, m.provider, m.version, bytes.NewBuffer(m.data))
 			}
 
 			router := newRouter()

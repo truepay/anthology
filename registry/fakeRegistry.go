@@ -2,10 +2,12 @@ package registry
 
 import (
 	"bytes"
+	"context"
 	"errors"
-	"github.com/erikvanbrakel/anthology/models"
 	"io"
 	"strings"
+
+	"github.com/erikvanbrakel/anthology/models"
 )
 
 type InMemoryRegistry struct {
@@ -13,7 +15,7 @@ type InMemoryRegistry struct {
 	data    map[string][]byte
 }
 
-func (r *InMemoryRegistry) ListModules(namespace, name, provider string, offset, limit int) (modules []models.Module, total int, err error) {
+func (r *InMemoryRegistry) ListModules(ctx context.Context, namespace, name, provider string, offset, limit int) (modules []models.Module, total int, err error) {
 	var result []models.Module
 
 	for _, m := range r.modules {
@@ -31,7 +33,7 @@ func (r *InMemoryRegistry) ListModules(namespace, name, provider string, offset,
 	return result, len(result), nil
 }
 
-func (r *InMemoryRegistry) PublishModule(namespace, name, provider, version string, data io.Reader) error {
+func (r *InMemoryRegistry) PublishModule(ctx context.Context, namespace, name, provider, version string, data io.Reader) error {
 	r.modules = append(r.modules, models.Module{
 		namespace,
 		name,
@@ -49,7 +51,7 @@ func (r *InMemoryRegistry) PublishModule(namespace, name, provider, version stri
 	return nil
 }
 
-func (r *InMemoryRegistry) GetModuleData(namespace, name, provider, version string) (reader *bytes.Buffer, err error) {
+func (r *InMemoryRegistry) GetModuleData(ctx context.Context, namespace, name, provider, version string) (reader *bytes.Buffer, err error) {
 	id := strings.Join([]string{namespace, name, provider, version}, "/")
 	moduleData, exists := r.data[id]
 	if !exists {

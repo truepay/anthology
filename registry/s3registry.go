@@ -2,6 +2,10 @@ package registry
 
 import (
 	"bytes"
+	"context"
+	"io"
+	"strings"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -9,8 +13,6 @@ import (
 	"github.com/erikvanbrakel/anthology/app"
 	"github.com/erikvanbrakel/anthology/models"
 	"github.com/sirupsen/logrus"
-	"io"
-	"strings"
 )
 
 type S3Registry struct {
@@ -18,7 +20,7 @@ type S3Registry struct {
 	endpoint string
 }
 
-func (r *S3Registry) ListModules(namespace, name, provider string, offset, limit int) (modules []models.Module, total int, err error) {
+func (r *S3Registry) ListModules(ctx context.Context, namespace, name, provider string, offset, limit int) (modules []models.Module, total int, err error) {
 	modules, err = r.getModules(namespace, name, provider)
 
 	if err != nil {
@@ -28,11 +30,11 @@ func (r *S3Registry) ListModules(namespace, name, provider string, offset, limit
 	return modules, len(modules), nil
 }
 
-func (S3Registry) PublishModule(namepsace, name, provider, version string, data io.Reader) (err error) {
+func (S3Registry) PublishModule(ctx context.Context, namepsace, name, provider, version string, data io.Reader) (err error) {
 	panic("implement me")
 }
 
-func (r *S3Registry) GetModuleData(namespace, name, provider, version string) (reader *bytes.Buffer, err error) {
+func (r *S3Registry) GetModuleData(ctx context.Context, namespace, name, provider, version string) (reader *bytes.Buffer, err error) {
 	s3client := s3.New(r.getSession())
 
 	obj, err := s3client.GetObject(&s3.GetObjectInput{

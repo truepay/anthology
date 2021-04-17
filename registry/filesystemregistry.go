@@ -2,22 +2,24 @@ package registry
 
 import (
 	"bytes"
+	"context"
 	"errors"
-	"github.com/erikvanbrakel/anthology/app"
-	"github.com/erikvanbrakel/anthology/models"
-	"github.com/sirupsen/logrus"
 	"io"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
+
+	"github.com/erikvanbrakel/anthology/app"
+	"github.com/erikvanbrakel/anthology/models"
+	"github.com/sirupsen/logrus"
 )
 
 type FilesystemRegistry struct {
 	basePath string
 }
 
-func (r *FilesystemRegistry) ListModules(namespace, name, provider string, offset, limit int) (modules []models.Module, total int, err error) {
+func (r *FilesystemRegistry) ListModules(ctx context.Context, namespace, name, provider string, offset, limit int) (modules []models.Module, total int, err error) {
 
 	modules, err = r.getModules(namespace, name, provider)
 
@@ -40,11 +42,11 @@ func (r *FilesystemRegistry) ListModules(namespace, name, provider string, offse
 
 }
 
-func (r *FilesystemRegistry) PublishModule(namespace, name, provider, version string, data io.Reader) (err error) {
+func (r *FilesystemRegistry) PublishModule(ctx context.Context, namespace, name, provider, version string, data io.Reader) (err error) {
 	panic("implement me")
 }
 
-func (r *FilesystemRegistry) GetModuleData(namespace, name, provider, version string) (reader *bytes.Buffer, err error) {
+func (r *FilesystemRegistry) GetModuleData(ctx context.Context, namespace, name, provider, version string) (reader *bytes.Buffer, err error) {
 	panic("implement me")
 }
 

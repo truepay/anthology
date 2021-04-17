@@ -1,24 +1,26 @@
 package v1
 
 import (
+	"context"
 	"fmt"
-	"github.com/blang/semver"
-	"github.com/erikvanbrakel/anthology/app"
-	"github.com/erikvanbrakel/anthology/models"
-	"github.com/go-ozzo/ozzo-routing"
 	"io"
 	"net/http"
 	"strconv"
+
+	"github.com/blang/semver"
+	"github.com/erikvanbrakel/anthology/app"
+	"github.com/erikvanbrakel/anthology/models"
+	routing "github.com/go-ozzo/ozzo-routing"
 )
 
 type (
 	moduleService interface {
-		Query(rs app.RequestScope, namespace, name, provider string, verified bool, offset, limit int) ([]models.Module, int, error)
-		QueryVersions(rs app.RequestScope, namespace, name, provider string) ([]models.Module, error)
-		Exists(rs app.RequestScope, namespace, name, provider, version string) (bool, error)
-		Get(rs app.RequestScope, namespace, name, provider, version string) (*models.Module, error)
-		GetData(rs app.RequestScope, namespace, name, provider, version string) (io.Reader, error)
-		Publish(rs app.RequestScope, namespace, name, provider, version string, data io.Reader) error
+		Query(ctx context.Context, rs app.RequestScope, namespace, name, provider string, verified bool, offset, limit int) ([]models.Module, int, error)
+		QueryVersions(ctx context.Context, rs app.RequestScope, namespace, name, provider string) ([]models.Module, error)
+		Exists(ctx context.Context, rs app.RequestScope, namespace, name, provider, version string) (bool, error)
+		Get(ctx context.Context, rs app.RequestScope, namespace, name, provider, version string) (*models.Module, error)
+		GetData(ctx context.Context, rs app.RequestScope, namespace, name, provider, version string) (io.Reader, error)
+		Publish(ctx context.Context, rs app.RequestScope, namespace, name, provider, version string, data io.Reader) error
 	}
 
 	moduleResource struct {
@@ -72,7 +74,7 @@ func (r *moduleResource) getModuleData(c *routing.Context) error {
 	provider := c.Param("provider")
 	version := c.Param("version")
 
-	data, err := r.service.GetData(rs, namespace, name, provider, version)
+	data, err := r.service.GetData(c.Request.Context(), rs, namespace, name, provider, version)
 
 	if err != nil {
 		return err
@@ -86,7 +88,7 @@ func (r *moduleResource) publish(c *routing.Context) error {
 	rs := app.GetRequestScope(c)
 	namespace, name, provider, version := c.Param("namespace"), c.Param("name"), c.Param("provider"), c.Param("version")
 
-	err := r.service.Publish(rs, namespace, name, provider, version, c.Request.Body)
+	err := r.service.Publish(c.Request.Context(), rs, namespace, name, provider, version, c.Request.Body)
 	if err != nil {
 		return err
 	}
@@ -104,7 +106,7 @@ func (r *moduleResource) query(c *routing.Context) error {
 	provider := c.Query("provider", "")
 	verified, _ := strconv.ParseBool(c.Query("verified", "false"))
 
-	modules, count, err := r.service.Query(rs, namespace, "", provider, verified, offset, limit)
+	modules, count, err := r.service.Query(c.Request.Context(), rs, namespace, "", provider, verified, offset, limit)
 
 	if err != nil {
 		return err
@@ -130,7 +132,7 @@ func (r *moduleResource) queryVersions(c *routing.Context) error {
 	name := c.Param("name")
 	provider := c.Param("provider")
 
-	versionsByModule, err := r.service.QueryVersions(rs, namespace, name, provider)
+	versionsByModule, err := r.service.QueryVersions(c.Request.Context(), rs, namespace, name, provider)
 
 	if err != nil {
 		return err
@@ -157,7 +159,7 @@ func (r *moduleResource) queryVersions(c *routing.Context) error {
 func (r *moduleResource) getDownloadUrl(c *routing.Context) error {
 	namespace, name, provider, version := c.Param("namespace"), c.Param("name"), c.Param("provider"), c.Param("version")
 
-	if exists, _ := r.service.Exists(app.GetRequestScope(c), namespace, name, provider, version); exists {
+	if exists, _ := r.service.Exists(c.Request.Context(), app.GetRequestScope(c), namespace, name, provider, version); exists {
 
 		url := c.URL("GetModuleData",
 			"namespace", namespace,
@@ -181,7 +183,7 @@ func (r *moduleResource) getLatestDownloadUrl(c *routing.Context) error {
 	name := c.Param("name")
 	provider := c.Param("provider")
 
-	modules, count, err := r.service.Query(rs, namespace, name, provider, false, 0, 100000)
+	modules, count, err := r.service.Query(c.Request.Context(), rs, namespace, name, provider, false, 0, 100000)
 
 	if err != nil {
 		return err
@@ -221,7 +223,7 @@ func (r *moduleResource) get(c *routing.Context) error {
 	provider := c.Param("provider")
 	version := c.Param("version")
 
-	module, err := r.service.Get(rs, namespace, name, provider, version)
+	module, err := r.service.Get(c.Request.Context(), rs, namespace, name, provider, version)
 
 	if err != nil {
 		return err
@@ -242,7 +244,7 @@ func (r *moduleResource) getLatest(c *routing.Context) error {
 	name := c.Param("name")
 	provider := c.Param("provider")
 
-	modules, err := r.service.QueryVersions(rs, namespace, name, provider)
+	modules, err := r.service.QueryVersions(c.Request.Context(), rs, namespace, name, provider)
 
 	if err != nil {
 		return err
@@ -275,7 +277,7 @@ func (r *moduleResource) queryLatest(c *routing.Context) error {
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 
-	modules, err := r.service.QueryVersions(rs, namespace, name, "")
+	modules, err := r.service.QueryVersions(c.Request.Context(), rs, namespace, name, "")
 
 	if err != nil {
 		return err
