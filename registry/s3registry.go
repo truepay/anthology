@@ -115,6 +115,9 @@ func (r *S3Registry) getSession() *session.Session {
 	return s
 }
 
+func (r *S3Registry) Close() {
+}
+
 func NewS3Registry(options app.S3Options) Registry {
 	return &S3Registry{
 		options.Bucket,

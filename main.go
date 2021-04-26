@@ -2,17 +2,19 @@ package main
 
 import (
 	"fmt"
-	"github.com/erikvanbrakel/anthology/api/v1"
+	"net/http"
+
+	v1 "github.com/erikvanbrakel/anthology/api/v1"
 	"github.com/erikvanbrakel/anthology/app"
 	"github.com/erikvanbrakel/anthology/registry"
 	"github.com/erikvanbrakel/anthology/services"
-	"github.com/go-ozzo/ozzo-routing"
+	routing "github.com/go-ozzo/ozzo-routing"
 	"github.com/go-ozzo/ozzo-routing/content"
 	"github.com/sirupsen/logrus"
-	"net/http"
 )
 
 func main() {
+	var err error
 	if err := app.LoadConfig(); err != nil {
 		panic(fmt.Errorf("invalid configuration: %s", err))
 	}
@@ -24,11 +26,17 @@ func main() {
 	switch app.Config.Backend {
 	case "s3":
 		r = registry.NewS3Registry(app.Config.S3)
-		break
 	case "filesystem":
-		r = registry.NewFilesystemRegistry(app.Config.FileSystem)
-		break
+		r, err = registry.NewFilesystemRegistry(app.Config.FileSystem)
+	case "memory":
+		r = registry.NewFakeRegistry()
 	}
+	defer r.Close()
+
+	if err != nil {
+		panic(fmt.Errorf("Error initializing registry %v", err))
+	}
+
 	http.Handle("/", buildRouter(logger, r))
 
 	address := fmt.Sprintf(":%v", app.Config.Port)

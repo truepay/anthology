@@ -46,6 +46,7 @@ func runAPITests(t *testing.T, dataset []testModule, tests []apiTestCase) {
 		t.Run(test.tag, func(t *testing.T) {
 			ctx := context.Background()
 			r := registry.NewFakeRegistry()
+			defer r.Close()
 
 			for _, m := range dataset {
 				r.PublishModule(ctx, m.namespace, m.name, m.provider, m.version, bytes.NewBuffer(m.data))
